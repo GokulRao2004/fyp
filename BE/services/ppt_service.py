@@ -13,6 +13,7 @@ from typing import Dict, List, Optional
 import os
 import io
 import logging
+import textwrap
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +104,53 @@ class PPTService:
             int(hex_color[4:6], 16)
         )
     
+    def _wrap_text(self, text: str, width: int = 80) -> str:
+        """Wrap text to prevent overflow"""
+        # Handle empty or None text
+        if not text:
+            return text
+        
+        # Split by newlines first to preserve intentional line breaks
+        lines = text.split('\n')
+        wrapped_lines = []
+        
+        for line in lines:
+            if len(line) <= width:
+                wrapped_lines.append(line)
+            else:
+                # Wrap long lines
+                wrapped = textwrap.fill(line, width=width, break_long_words=False, break_on_hyphens=True)
+                wrapped_lines.append(wrapped)
+        
+        return '\n'.join(wrapped_lines)
+    
+    def _calculate_optimal_font_size(self, text_frame, initial_size: int = 18, min_size: int = 10) -> int:
+        """Calculate optimal font size to fit text in frame"""
+        current_size = initial_size
+        
+        # Try reducing font size if text overflows
+        while current_size >= min_size:
+            # Set all paragraphs to current size
+            for paragraph in text_frame.paragraphs:
+                paragraph.font.size = Pt(current_size)
+            
+            # Check if text fits (approximation based on character count and dimensions)
+            # This is a heuristic since python-pptx doesn't provide direct overflow detection
+            total_chars = sum(len(p.text) for p in text_frame.paragraphs)
+            frame_area = text_frame._element.getparent().getparent()
+            
+            # Rough estimation: if we have too many characters, reduce font size
+            # Approximate: 80 chars per line at 18pt, scale accordingly
+            estimated_lines = total_chars / (80 * (current_size / 18))
+            
+            # If estimated lines fit in available height, we're good
+            if estimated_lines <= 15:  # Reasonable number of lines for a slide
+                break
+                
+            current_size -= 1
+        
+        return current_size
+    
     def create_title_slide(self, title: str, subtitle: str = ""):
         """
         Create a title slide
@@ -128,7 +176,11 @@ class PPTService:
         
         title_box = slide.shapes.add_textbox(left, top, width, height)
         title_frame = title_box.text_frame
-        title_frame.text = title
+        title_frame.word_wrap = True
+        
+        # Wrap title text if too long
+        wrapped_title = self._wrap_text(title, width=50)
+        title_frame.text = wrapped_title
         
         # Format title
         title_para = title_frame.paragraphs[0]
@@ -146,7 +198,11 @@ class PPTService:
             
             subtitle_box = slide.shapes.add_textbox(left, top, width, height)
             subtitle_frame = subtitle_box.text_frame
-            subtitle_frame.text = subtitle
+            subtitle_frame.word_wrap = True
+            
+            # Wrap subtitle text if too long
+            wrapped_subtitle = self._wrap_text(subtitle, width=70)
+            subtitle_frame.text = wrapped_subtitle
             
             subtitle_para = subtitle_frame.paragraphs[0]
             subtitle_para.alignment = PP_ALIGN.CENTER
@@ -189,7 +245,11 @@ class PPTService:
         
         title_box = slide.shapes.add_textbox(left, top, width, height)
         title_frame = title_box.text_frame
-        title_frame.text = title
+        title_frame.word_wrap = True
+        
+        # Wrap title text if too long
+        wrapped_title = self._wrap_text(title, width=60)
+        title_frame.text = wrapped_title
         
         title_para = title_frame.paragraphs[0]
         title_para.font.size = Pt(36)
@@ -245,17 +305,31 @@ class PPTService:
         content_frame.word_wrap = True
         content_frame.vertical_anchor = MSO_ANCHOR.TOP
         
+        # Determine appropriate wrap width based on content width
+        wrap_width = int(content_width.inches * 12)  # Approximate chars per inch
+        
         for i, bullet in enumerate(content):
             if i == 0:
                 p = content_frame.paragraphs[0]
             else:
                 p = content_frame.add_paragraph()
             
-            p.text = bullet
+            # Wrap bullet text to prevent overflow
+            wrapped_bullet = self._wrap_text(bullet, width=wrap_width)
+            p.text = wrapped_bullet
             p.level = 0
             p.font.size = Pt(18)
             p.font.color.rgb = self.theme['text_color']
             p.space_before = Pt(12)
+        
+        # Calculate and apply optimal font size if needed
+        total_chars = sum(len(bullet) for bullet in content)
+        num_bullets = len(content)
+        
+        # If content is too long, adjust font size
+        if num_bullets > 8 or total_chars > 800:
+            optimal_size = self._calculate_optimal_font_size(content_frame, initial_size=18, min_size=12)
+            logger.debug(f"Adjusted content font size to {optimal_size}pt to prevent overflow")
         
         # Add speaker notes if provided
         if speaker_notes:
@@ -298,7 +372,11 @@ class PPTService:
         
         title_box = slide.shapes.add_textbox(left, top, width, height)
         title_frame = title_box.text_frame
-        title_frame.text = title
+        title_frame.word_wrap = True
+        
+        # Wrap title text if too long
+        wrapped_title = self._wrap_text(title, width=60)
+        title_frame.text = wrapped_title
         
         title_para = title_frame.paragraphs[0]
         title_para.font.size = Pt(36)

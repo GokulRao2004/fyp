@@ -57,13 +57,13 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-md">
+        {/* <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="text-4xl mb-4">📄</div>
           <h3 className="text-xl font-bold text-gray-900 mb-2">Document Upload</h3>
           <p className="text-gray-600">
             Upload PDF or DOCX files to extract text and generate presentations from existing content.
           </p>
-        </div>
+        </div> */}
 
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="text-4xl mb-4">🎨</div>

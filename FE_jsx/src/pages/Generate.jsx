@@ -315,7 +315,7 @@ export default function Generate() {
               AI Provider
             </label>
             <div className="flex gap-4">
-              <label className="flex items-center cursor-pointer">
+              {/* <label className="flex items-center cursor-pointer">
                 <input
                   type="radio"
                   name="ai_provider"
@@ -325,7 +325,7 @@ export default function Generate() {
                   className="mr-2"
                 />
                 <span className="text-gray-700">Claude (Better Quality)</span>
-              </label>
+              </label> */}
               <label className="flex items-center cursor-pointer">
                 <input
                   type="radio"
@@ -383,7 +383,7 @@ export default function Generate() {
           </div>
 
           {/* File Upload */}
-          <div>
+          {/* <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Upload Document (Optional)
             </label>
@@ -398,10 +398,10 @@ export default function Generate() {
                 ✓ Text extracted ({uploadedText.length} characters)
               </p>
             )}
-          </div>
+          </div> */}
 
           {/* Source Text */}
-          <div>
+          {/* <div>
             <label htmlFor="source_text" className="block text-sm font-semibold text-gray-700 mb-2">
               Additional Context (Optional)
             </label>
@@ -414,7 +414,7 @@ export default function Generate() {
               placeholder="Paste any text or notes you want to include in the presentation..."
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-          </div>
+          </div> */}
 
           {/* Submit Button */}
           <button
