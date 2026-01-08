@@ -50,7 +50,7 @@ export default function Layout() {
                 >
                   Generate
                 </Link>
-                <Link
+                {/* <Link
                   to="/history"
                   className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
                     location.pathname === '/history'
@@ -59,7 +59,7 @@ export default function Layout() {
                   }`}
                 >
                   History
-                </Link>
+                </Link> */}
               </div>
             </div>
             
