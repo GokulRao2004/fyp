@@ -15,21 +15,21 @@ function App() {
           <Route path="generate" element={<Generate />} />
           <Route path="editor/:pptId" element={<Editor />} />
           <Route path="history" element={<History />} />
-          <Route 
-            path="sign-in/*" 
+          <Route
+            path="sign-in/*"
             element={
               <div className="flex items-center justify-center min-h-screen">
                 <SignIn routing="path" path="/sign-in" />
               </div>
-            } 
+            }
           />
-          <Route 
-            path="sign-up/*" 
+          <Route
+            path="sign-up/*"
             element={
               <div className="flex items-center justify-center min-h-screen">
                 <SignUp routing="path" path="/sign-up" />
               </div>
-            } 
+            }
           />
         </Route>
       </Routes>

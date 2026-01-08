@@ -5,12 +5,13 @@ Handles replacing images on slides
 from flask import Blueprint, request, jsonify
 import logging
 import os
+import re
 
-from auth import require_auth
+from auth_supabase import require_auth
 from storage import ppt_storage
 from services.pixabay import PixabayClient
 from services.ppt_service import PPTService
-from services.firebase_service import firebase_service
+from services.supabase_service import supabase_service
 
 logger = logging.getLogger(__name__)
 
@@ -94,28 +95,31 @@ def replace_image():
                 'code': 404
             }), 404
         
-        # Download and upload new image to Firebase
+        # Download and upload new image to Supabase
         pixabay = PixabayClient()
         user_id = getattr(request, 'user_id', 'anonymous')
         slide_num = slide_index + 1
         
-        firebase_path = f"users/{user_id}/presentations/{ppt_data.get('topic', 'presentation').replace(' ', '_')}/slide_{slide_num}.jpg"
+        # Sanitize topic name for storage path - remove/replace special characters
+        topic = ppt_data.get('topic', 'presentation')
+        safe_topic = re.sub(r'[^a-zA-Z0-9_-]', '_', topic.replace(' ', '_'))
+        storage_path = f"users/{user_id}/presentations/{safe_topic}/slide_{slide_num}.jpg"
         
-        firebase_url = pixabay.download_and_upload_image(
+        supabase_url = pixabay.download_and_upload_image(
             image_url,
-            firebase_path,
-            firebase_service
+            storage_path,
+            supabase_service
         )
         
-        if not firebase_url:
+        if not supabase_url:
             return jsonify({
-                'error': 'Failed to upload image to Firebase',
+                'error': 'Failed to upload image to Supabase',
                 'code': 500
             }), 500
         
         # Update image URLs
         image_urls = ppt_data.get('image_urls', {})
-        image_urls[slide_num] = firebase_url
+        image_urls[slide_num] = supabase_url
         
         # Regenerate PPT with new image
         ppt_service = PPTService(theme=ppt_data.get('theme', 'modern'))
@@ -146,19 +150,18 @@ def replace_image():
         # Return updated metadata
         updated_data = ppt_storage.get(ppt_id)
         
-        # Format slides with Firebase URLs
+        # Format slides with image URLs
         slides = []
         image_urls_data = updated_data.get('image_urls', {})
         for slide in updated_data.get('slides', []):
             slide_copy = slide.copy()
             slide_num = slide['index'] + 1
             
-            # Use Firebase URL if available
-            firebase_url = image_urls_data.get(slide_num)
+            # Use Supabase URL if available
+            image_url = image_urls_data.get(slide_num)
             
-            if firebase_url:
-                slide_copy['image_url'] = firebase_url
-                slide_copy['image_firebase_url'] = firebase_url
+            if image_url:
+                slide_copy['image_url'] = image_url
         
             slides.append(slide_copy)
         

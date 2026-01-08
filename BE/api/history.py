@@ -4,8 +4,8 @@ Handles user presentations history
 """
 from flask import Blueprint, request, jsonify
 import logging
-from auth import require_auth
-from services.firebase_service import firebase_service
+from auth_supabase import require_auth
+from services.supabase_service import supabase_service
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ def get_history():
         user_id = request.user_id
         limit = request.args.get('limit', 50, type=int)
         
-        presentations = firebase_service.get_user_presentations(user_id, limit=limit)
+        presentations = supabase_service.get_user_presentations(user_id, limit=limit)
         
         return jsonify({
             'presentations': presentations,

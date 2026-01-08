@@ -372,7 +372,7 @@ export default function Generate() {
           </div>
 
           {/* File Upload */}
-          <div>
+          {/* <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Upload Document (Optional)
             </label>
@@ -387,10 +387,10 @@ export default function Generate() {
                 ✓ Text extracted ({uploadedText.length} characters)
               </p>
             )}
-          </div>
+          </div> */}
 
           {/* Source Text */}
-          <div>
+          {/* <div>
             <label htmlFor="source_text" className="block text-sm font-semibold text-gray-700 mb-2">
               Additional Context (Optional)
             </label>
@@ -403,7 +403,7 @@ export default function Generate() {
               placeholder="Paste any text or notes you want to include in the presentation..."
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-          </div>
+          </div> */}
 
           {/* Submit Button */}
           <button

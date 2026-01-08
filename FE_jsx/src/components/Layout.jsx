@@ -1,24 +1,23 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { SignedIn, SignedOut, UserButton, useAuth } from '@clerk/clerk-react'
 import { useEffect } from 'react'
+import { useUser, useAuth } from '@clerk/clerk-react'
 import { setAuthToken } from '../api'
 
 export default function Layout() {
   const location = useLocation()
-  const { getToken } = useAuth()
+  const { user } = useUser()
+  const { getToken, signOut } = useAuth()
 
   // Set auth token when user is authenticated
   useEffect(() => {
-    const updateToken = async () => {
-      try {
-        const token = await getToken()
-        setAuthToken(token)
-      } catch (error) {
-        console.error('Failed to get auth token:', error)
-      }
+    if (user) {
+      getToken().then(token => {
+        if (token) {
+          setAuthToken(token)
+        }
+      })
     }
-    updateToken()
-  }, [getToken])
+  }, [user, getToken])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -48,7 +47,7 @@ export default function Layout() {
                 >
                   Generate
                 </Link>
-                <Link
+                {/* <Link
                   to="/history"
                   className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${location.pathname === '/history'
                       ? 'border-blue-500 text-gray-900'
@@ -56,29 +55,38 @@ export default function Layout() {
                     }`}
                 >
                   History
-                </Link>
+                </Link> */}
               </div>
             </div>
 
             {/* Auth Section */}
             <div className="flex items-center">
-              <SignedOut>
-                <Link
-                  to="/sign-in"
-                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  to="/sign-up"
-                  className="ml-3 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
-                >
-                  Sign Up
-                </Link>
-              </SignedOut>
-              <SignedIn>
-                <UserButton afterSignOutUrl="/" />
-              </SignedIn>
+              {!user ? (
+                <>
+                  <Link
+                    to="/sign-in"
+                    className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/sign-up"
+                    className="ml-3 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              ) : (
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-gray-700">{user.primaryEmailAddress?.emailAddress}</span>
+                  <button
+                    onClick={() => signOut()}
+                    className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

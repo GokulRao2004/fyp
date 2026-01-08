@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useUser } from '@clerk/clerk-react'
 import { getHistory, deletePPT } from '../api'
-import { useAuth } from '../contexts/AuthContext'
 
 export default function History() {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user } = useUser()
   const [presentations, setPresentations] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    loadPresentations()
+    if (user) {
+      loadPresentations()
+    }
   }, [user])
 
   const loadPresentations = async () => {

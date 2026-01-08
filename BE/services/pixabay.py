@@ -85,19 +85,19 @@ class PixabayClient:
     def download_and_upload_image(
         self, 
         image_url: str, 
-        firebase_destination_path: str,
-        firebase_service
+        storage_destination_path: str,
+        storage_service
     ) -> Optional[str]:
         """
-        Download an image from URL and upload to Firebase Storage
+        Download an image from URL and upload to Supabase Storage
         
         Args:
             image_url: URL of the image to download
-            firebase_destination_path: Path in Firebase Storage (e.g., 'users/uid/images/slide_1.jpg')
-            firebase_service: Firebase service instance
+            storage_destination_path: Path in Supabase Storage (e.g., 'users/uid/images/slide_1.jpg')
+            storage_service: Supabase service instance
         
         Returns:
-            Firebase public URL if successful, None otherwise
+            Supabase public URL if successful, None otherwise
         """
         try:
             response = requests.get(image_url, timeout=15, stream=True)
@@ -108,18 +108,18 @@ class PixabayClient:
             for chunk in response.iter_content(chunk_size=8192):
                 image_bytes += chunk
             
-            # Upload to Firebase Storage
-            firebase_url = firebase_service.upload_image_from_bytes(
+            # Upload to Supabase Storage
+            supabase_url = storage_service.upload_image_from_bytes(
                 image_bytes, 
-                firebase_destination_path, 
+                storage_destination_path, 
                 content_type='image/jpeg'
             )
             
-            if firebase_url:
-                logger.info(f"Uploaded image to Firebase: {firebase_destination_path}")
-                return firebase_url
+            if supabase_url:
+                logger.info(f"Uploaded image to Supabase: {storage_destination_path}")
+                return supabase_url
             else:
-                logger.error(f"Failed to upload image to Firebase")
+                logger.error(f"Failed to upload image to Supabase")
                 return None
             
         except Exception as e:
@@ -148,24 +148,24 @@ class PixabayClient:
         logger.info(f"Selected best image for '{query}': ID {best_image.get('id')}")
         return best_image
     
-    def download_slide_image_to_firebase(
+    def download_slide_image_to_storage(
         self, 
         keywords: str, 
         slide_number: int,
-        firebase_destination_path: str,
-        firebase_service
+        storage_destination_path: str,
+        storage_service
     ) -> Optional[str]:
         """
-        Download an image for a specific slide and upload to Firebase
+        Download an image for a specific slide and upload to Supabase
         
         Args:
             keywords: Search keywords
             slide_number: Slide number for reference
-            firebase_destination_path: Path in Firebase Storage
-            firebase_service: Firebase service instance
+            storage_destination_path: Path in Supabase Storage
+            storage_service: Supabase service instance
         
         Returns:
-            Firebase public URL or None
+            Supabase public URL or None
         """
         image_data = self.get_best_image(keywords)
         
@@ -179,33 +179,33 @@ class PixabayClient:
         if not image_url:
             return None
         
-        # Upload to Firebase
-        firebase_url = self.download_and_upload_image(image_url, firebase_destination_path, firebase_service)
+        # Upload to Supabase
+        supabase_url = self.download_and_upload_image(image_url, storage_destination_path, storage_service)
         
-        if firebase_url:
+        if supabase_url:
             logger.info(f"Uploaded image for slide {slide_number}: {keywords}")
-            return firebase_url
+            return supabase_url
         else:
             return None
     
-    def download_all_slide_images_to_firebase(
+    def download_all_slide_images_to_storage(
         self, 
         slides_data: List[Dict],
         user_id: str,
         presentation_topic: str,
-        firebase_service
+        storage_service
     ) -> Dict[int, str]:
         """
-        Download images for all slides and upload to Firebase
+        Download images for all slides and upload to Supabase
         
         Args:
             slides_data: List of slide dictionaries with image_keywords
-            user_id: User ID for Firebase path
+            user_id: User ID for storage path
             presentation_topic: Presentation topic for path
-            firebase_service: Firebase service instance
+            storage_service: Supabase service instance
         
         Returns:
-            Dictionary mapping slide numbers to Firebase URLs
+            Dictionary mapping slide numbers to Supabase URLs
         """
         image_urls = {}
         
@@ -216,10 +216,10 @@ class PixabayClient:
             if not keywords:
                 continue
             
-            # Create Firebase path
-            firebase_path = f"users/{user_id}/presentations/{presentation_topic.replace(' ', '_')}/slide_{slide_num}.jpg"
+            # Create storage path
+            storage_path = f"users/{user_id}/presentations/{presentation_topic.replace(' ', '_')}/slide_{slide_num}.jpg"
             
-            url = self.download_slide_image_to_firebase(keywords, slide_num, firebase_path, firebase_service)
+            url = self.download_slide_image_to_storage(keywords, slide_num, storage_path, storage_service)
             
             if url:
                 image_urls[slide_num] = url
@@ -227,7 +227,7 @@ class PixabayClient:
             # Small delay to be respectful to the API
             time.sleep(0.5)
         
-        logger.info(f"Uploaded {len(image_urls)} images to Firebase")
+        logger.info(f"Uploaded {len(image_urls)} images to Supabase")
         return image_urls
     
     def get_image_suggestions(self, query: str, count: int = 5) -> List[Dict]:

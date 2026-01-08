@@ -171,10 +171,10 @@ export default function Editor() {
                     </p>
                   </div>
                 </div>
-                {(slide.image_firebase_url || slide.image_url) && (
+                {slide.image_url && (
                   <div className="mt-2 rounded overflow-hidden">
                     <img
-                      src={slide.image_firebase_url || slide.image_url}
+                      src={slide.image_url}
                       alt={slide.title}
                       className="w-full h-16 object-cover"
                     />

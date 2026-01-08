@@ -1,6 +1,6 @@
 /**
  * Client-side PowerPoint Generation using PptxGenJS
- * Generates PPTX files from presentation data with images from Firebase
+ * Generates PPTX files from presentation data with images from Supabase
  */
 import pptxgen from "pptxgenjs";
 
@@ -124,7 +124,7 @@ export async function generatePPTXFromData(presentationData) {
     }
 
     // Determine layout (with or without image)
-    const hasImage = slideData.image_firebase_url || slideData.image_url;
+    const hasImage = slideData.image_url;
 
     // Add content bullets
     if (slideData.content && slideData.content.length > 0) {
@@ -151,10 +151,10 @@ export async function generatePPTXFromData(presentationData) {
 
     // Add image if exists
     if (hasImage) {
-      const imageUrl = slideData.image_firebase_url || slideData.image_url;
+      const imageUrl = slideData.image_url;
 
       try {
-        // For Firebase URLs and other HTTPS images
+        // For Supabase URLs and other HTTPS images
         slide.addImage({
           path: imageUrl,
           x: 6,
@@ -211,6 +211,6 @@ export async function generatePPTXFromData(presentationData) {
  * @returns {Promise<string>} - Base64 image data
  */
 export async function generateSlidePreview(slideData) {
-  // Return Firebase URL
-  return slideData.image_firebase_url || slideData.image_url || null;
+  // Return image URL
+  return slideData.image_url || null;
 }

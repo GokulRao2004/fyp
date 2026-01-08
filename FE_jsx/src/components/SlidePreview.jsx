@@ -7,8 +7,8 @@ export default function SlidePreview({ slide, slideIndex, onUpdate, onImageChang
   const [showImagePicker, setShowImagePicker] = useState(false)
   const [imageError, setImageError] = useState(false)
 
-  // Use Firebase URL from backend
-  const imageUrl = slide.image_firebase_url || slide.image_url
+  // Use image URL from backend
+  const imageUrl = slide.image_url
 
   const handleTitleSave = () => {
     if (editedTitle !== slide.title) {
@@ -141,7 +141,7 @@ export default function SlidePreview({ slide, slideIndex, onUpdate, onImageChang
               </svg>
               <h4 className="text-lg font-semibold text-gray-900">Image</h4>
             </div>
-            {/* Image change functionality disabled - images managed via Firebase */}
+            {/* Image change functionality disabled - images managed via Supabase */}
             {/* <button
               onClick={() => setShowImagePicker(!showImagePicker)}
               className="px-4 py-2 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors font-medium"
@@ -157,7 +157,11 @@ export default function SlidePreview({ slide, slideIndex, onUpdate, onImageChang
                   src={imageUrl}
                   alt={slide.title || 'Slide image'}
                   className="w-full h-64 object-cover rounded-lg shadow-md border border-gray-200"
-                  onError={() => setImageError(true)}
+                  onError={(e) => {
+                    console.error('Image failed to load:', imageUrl)
+                    console.error('Error details:', e)
+                    setImageError(true)
+                  }}
                   crossOrigin="anonymous"
                 />
               ) : (
@@ -167,7 +171,7 @@ export default function SlidePreview({ slide, slideIndex, onUpdate, onImageChang
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     <p className="mt-3 text-sm font-medium">Image unavailable</p>
-                    <p className="mt-1 text-xs">Select a new image below</p>
+                    <p className="mt-1 text-xs text-gray-500 break-all">{imageUrl}</p>
                   </div>
                 </div>
               )}

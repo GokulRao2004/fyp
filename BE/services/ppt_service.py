@@ -131,6 +131,7 @@ class PPTService:
         title_box = slide.shapes.add_textbox(left, top, width, height)
         title_frame = title_box.text_frame
         title_frame.text = title
+        title_frame.word_wrap = True  # Enable word wrapping for long titles
         
         # Format title
         title_para = title_frame.paragraphs[0]
@@ -214,7 +215,7 @@ class PPTService:
         temp_file = None
         
         if image_url_or_path:
-            # Check if it's a URL (Firebase or other)
+            # Check if it's a URL (Supabase or other)
             if image_url_or_path.startswith('http://') or image_url_or_path.startswith('https://'):
                 try:
                     # Download image temporarily

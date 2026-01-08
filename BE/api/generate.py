@@ -5,17 +5,18 @@ Handles presentation generation from topic/text/URLs/Wikipedia
 from flask import Blueprint, request, jsonify
 import logging
 import os
+import re
 from dotenv import load_dotenv
 load_dotenv()
 
-from auth import require_auth, optional_auth
+from auth_supabase import require_auth, optional_auth
 # from services.claude_client import ClaudeClient
 from services.groq import GroqClient
 from services.pixabay import PixabayClient
 from services.ppt_service import PPTService
 from services.web_scraper import WebScraper
 from services.wikipedia_service import WikipediaService
-from services.firebase_service import firebase_service
+from services.supabase_service import supabase_service
 from storage import ppt_storage
 
 logger = logging.getLogger(__name__)
@@ -162,10 +163,12 @@ def generate_ppt():
         
         presentation_data = ai_client.generate_presentation_structure(context_topic, slide_count)
         
-        # Fetch images from Pixabay and upload to Firebase if API key available
+        # Fetch images from Pixabay and upload to Supabase if API key available
         image_urls = {}
         suggested_images_by_slide = {}
-        user_id = getattr(request, 'user_id', 'anonymous')
+        user_id = getattr(request, 'user_id', None)
+        if not user_id or user_id == 'None':
+            user_id = 'anonymous'
         
         if os.getenv('PIXABAY_API_KEY'):
             try:
@@ -179,25 +182,27 @@ def generate_ppt():
                     suggestions = pixabay.get_image_suggestions(keywords, count=5)
                     suggested_images_by_slide[slide_num] = suggestions
                     
-                    # Download and upload best image to Firebase
+                    # Download and upload best image to Supabase
                     if suggestions:
                         best_img = suggestions[0]
-                        firebase_path = f"users/{user_id}/presentations/{topic.replace(' ', '_')}/slide_{slide_num}.jpg"
+                        # Sanitize topic name for storage path - remove/replace special characters
+                        safe_topic = re.sub(r'[^a-zA-Z0-9_-]', '_', topic.replace(' ', '_'))
+                        storage_path = f"users/{user_id}/presentations/{safe_topic}/slide_{slide_num}.jpg"
                         
-                        firebase_url = pixabay.download_and_upload_image(
+                        supabase_url = pixabay.download_and_upload_image(
                             best_img['webformat_url'], 
-                            firebase_path,
-                            firebase_service
+                            storage_path,
+                            supabase_service
                         )
                         
-                        if firebase_url:
-                            image_urls[slide_num] = firebase_url
+                        if supabase_url:
+                            image_urls[slide_num] = supabase_url
                 
-                logger.info(f"Uploaded {len(image_urls)} images to Firebase")
+                logger.info(f"Uploaded {len(image_urls)} images to Supabase")
             except Exception as e:
                 logger.error(f"Error fetching images: {e}")
         
-        # Generate PowerPoint file - pass Firebase URLs
+        # Generate PowerPoint file - pass Supabase URLs
         ppt_service = PPTService(theme=theme, brand_colors=brand_colors)
         ppt_bytes = ppt_service.generate_from_data(presentation_data, image_urls)
         
@@ -206,8 +211,8 @@ def generate_ppt():
         for slide in presentation_data.get('slides', []):
             slide_num = slide.get('slide_number', slide.get('index', 0) + 1)
             
-            # Use Firebase URL for image
-            firebase_url = image_urls.get(slide_num)
+            # Use Supabase URL for image
+            image_url = image_urls.get(slide_num)
             
             slides_response.append({
                 'index': slide_num - 1,
@@ -217,8 +222,7 @@ def generate_ppt():
                 'speaker_notes': slide.get('speaker_notes', ''),
                 'layout': 'content',
                 'suggested_images': suggested_images_by_slide.get(slide_num, []),
-                'image_url': firebase_url,
-                'image_firebase_url': firebase_url
+                'image_url': image_url
             })
         
         # Update presentation data with formatted slides

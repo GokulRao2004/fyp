@@ -151,22 +151,59 @@ class SupabaseService:
             Public URL of uploaded image or None if failed
         """
         try:
+            from urllib.parse import quote
+            
+            # Try to delete existing file first (if it exists)
+            try:
+                self.client.storage.from_(STORAGE_BUCKET).remove([destination_path])
+                logger.debug(f"Removed existing file at {destination_path}")
+            except Exception:
+                # File doesn't exist, that's fine
+                pass
+            
             # Upload to storage
             response = self.client.storage.from_(STORAGE_BUCKET).upload(
                 path=destination_path,
                 file=image_bytes,
-                file_options={"content-type": content_type}
+                file_options={"content-type": content_type, "upsert": "true"}
             )
             
-            # Generate public URL
-            public_url = self.client.storage.from_(STORAGE_BUCKET).get_public_url(destination_path)
+            # Generate public URL with proper URL encoding and download parameter
+            encoded_path = quote(destination_path, safe='/')
+            supabase_url = os.getenv('SUPABASE_URL').rstrip('/')
+            # Add download=1 to prevent issues with CORS on image display
+            public_url = f"{supabase_url}/storage/v1/object/public/{STORAGE_BUCKET}/{encoded_path}?download=false"
             
             logger.info(f"Uploaded image to {destination_path}")
+            logger.info(f"Public URL: {public_url}")
             return public_url
             
         except Exception as e:
-            logger.error(f"Failed to upload image: {e}")
-            return None
+            logger.error(f"Failed to upload image to {destination_path}: {e}")
+            # Try to get the public URL anyway if file exists
+            try:
+                from urllib.parse import quote
+                encoded_path = quote(destination_path, safe='/')
+                supabase_url = os.getenv('SUPABASE_URL').rstrip('/')
+                public_url = f"{supabase_url}/storage/v1/object/public/{STORAGE_BUCKET}/{encoded_path}?download=false"
+                logger.info(f"File already exists, returning URL: {public_url}")
+                return public_url
+            except:
+                return None
+    
+    def upload_image_from_bytes(self, image_bytes: bytes, destination_path: str, content_type: str = 'image/jpeg') -> Optional[str]:
+        """
+        Upload image bytes to storage bucket (alias for upload_image for compatibility)
+        
+        Args:
+            image_bytes: Image data as bytes
+            destination_path: Path in bucket (e.g., 'user_id/presentation_id/slide_1.jpg')
+            content_type: MIME type of the image
+            
+        Returns:
+            Public URL of uploaded image or None if failed
+        """
+        return self.upload_image(image_bytes, destination_path, content_type)
     
     def upload_image_from_path(self, image_path: str, destination_path: str) -> Optional[str]:
         """

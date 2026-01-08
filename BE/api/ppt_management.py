@@ -15,16 +15,15 @@ ppt_mgmt_bp = Blueprint('ppt_management', __name__)
 
 
 def format_slides_for_response(slides, image_urls):
-    """Convert slides with Firebase image URLs for frontend"""
+    """Convert slides with image URLs for frontend"""
     formatted_slides = []
     for slide in slides:
         slide_copy = slide.copy()
         slide_num = slide['index'] + 1
         
-        # Use Firebase URL if exists
+        # Use image URL if exists
         if image_urls and slide_num in image_urls:
             slide_copy['image_url'] = image_urls[slide_num]
-            slide_copy['image_firebase_url'] = image_urls[slide_num]
         
         formatted_slides.append(slide_copy)
     
@@ -55,7 +54,7 @@ def get_ppt(ppt_id):
                 'code': 404
             }), 404
         
-        # Format slides with Firebase URLs
+        # Format slides with image URLs
         slides = format_slides_for_response(
             ppt_data.get('slides', []),
             ppt_data.get('image_urls', {})
@@ -244,7 +243,7 @@ def update_slide(ppt_id, slide_index):
         # Return updated metadata
         updated_data = ppt_storage.get(ppt_id)
         
-        # Format slides with Firebase URLs
+        # Format slides with image URLs
         slides = format_slides_for_response(
             updated_data.get('slides', []),
             updated_data.get('image_urls', {})
